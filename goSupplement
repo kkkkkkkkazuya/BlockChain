@@ -18,3 +18,5 @@ user := new(User)はuser := &User{}と同じ意味になります。
 「値渡し」となりコピーを触っていることになるため、意図した挙動にはならず、
 ・ポインタレシーバ
 「参照渡し」なので、上書きすることが可能となっています。
+◆参照URL
+https://zenn.dev/syo_yamamoto/articles/f4afbc798cac90

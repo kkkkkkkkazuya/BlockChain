@@ -11,14 +11,14 @@
 ・ナンス
 
 一つのブロックに対して
-・prev hash
+### prev hash
 前のブロックの情報を元にして作ったハッシュの情報が入っている
 
-・timestamp
+### timestamp
 生成の時間が入っている
 
-・nonce
+### nonce
 ルールを元に作った解答みたいなもの
 
-・transactions
+### transactions
 Poolにtransaction情報をまとめて、マインニングする

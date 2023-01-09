@@ -9,18 +9,21 @@ import (
 	"time"
 )
 
+// 今回は、先頭の0の数を3連続にする。
+const MINING_DIFFICULTY = 3
+
 /**
 * １ブロックの構造体
 **/
 type Block struct {
+	// タイムスタンプ
+	timestamp int64
+
 	// ナンス
 	nonce int
 
 	// ハッシュ
 	previousHash [32]byte
-
-	// タイムスタンプ
-	timestamp int64
 
 	// トランザクション
 	transactions []*Transaction
@@ -159,6 +162,51 @@ func (bc *BlockChain) addTransaction(sender string, recipient string, value floa
 }
 
 /**
+* トランザクションプールのコピー
+* @return トランザクション情報
+**/
+func (bc *BlockChain) CopyTransactionPool() []*Transaction {
+	// 空のスライス
+	transactions := make([]*Transaction, 0)
+	for _, t := range bc.transactionPool {
+		transactions = append(transactions,
+			NewTransaction(
+				t.senderBlockcahinAddress,
+				t.recipientBlockchainAddress,
+				t.value))
+	}
+	return transactions
+}
+
+/**
+* 0が3連続かの判定
+* @return 0が3連続かの判定
+**/
+func (bc *BlockChain) ValidProof(nonce int, previousHash [32]byte, transactions []*Transaction, difficulty int) bool {
+	zeros := strings.Repeat("0", difficulty)
+	guessBlock := Block{0, nonce, previousHash, transactions}
+	guessHashStr := fmt.Sprintf("%x", guessBlock.Hash())
+	return guessHashStr[:difficulty] == zeros
+}
+
+/**
+* nonceの値が何になるのか解を導き出す（ProofOfWork）
+* @return nonce情報
+**/
+func (bc *BlockChain) ProofOfWork() int {
+	transactions := bc.CopyTransactionPool()
+	previousHash := bc.LastBlock().Hash()
+	// nonceの初期値はゼロ
+	nonce := 0
+
+	// 先頭がMINING_DIFFICULTYの数になるまでnonceが足され続ける。
+	for !bc.ValidProof(nonce, previousHash, transactions, MINING_DIFFICULTY) {
+		nonce += 1
+	}
+	return nonce
+}
+
+/**
 * トランザクションの構造体
 **/
 type Transaction struct {
@@ -228,18 +276,19 @@ func main() {
 
 	// トランザクション情報の追加
 	blockChain.addTransaction("A", "B", 1.0)
-
 	// 一個前のブロックのハッシュ化した情報
 	previousHash := blockChain.LastBlock().Hash()
-
+	// ナンス情報
+	nonce := blockChain.ProofOfWork()
 	// ブロックチェーンの作成
-	blockChain.CreateBlock(5, previousHash)
+	blockChain.CreateBlock(nonce, previousHash)
 	blockChain.Print()
 
 	// 一個前のブロックのハッシュ化した情報
 	previousHash = blockChain.LastBlock().Hash()
-
+	// ナンス情報
+	nonce = blockChain.ProofOfWork()
 	// ブロックチェーンの作成
-	blockChain.CreateBlock(4, previousHash)
+	blockChain.CreateBlock(nonce, previousHash)
 	blockChain.Print()
 }

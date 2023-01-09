@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -15,7 +17,7 @@ type Block struct {
 	nonce int
 
 	// ハッシュ
-	previousHash string
+	previousHash [32]byte
 
 	// タイムスタンプ
 	timestamp int64
@@ -30,8 +32,7 @@ type Block struct {
 * @para previousHash: ハッシュ値
 * @return ブロック情報
 **/
-func NewBlock(nonce int, previousHash string) *Block {
-
+func NewBlock(nonce int, previousHash [32]byte) *Block {
 	b := new(Block)
 	b.timestamp = time.Now().UnixNano()
 	b.nonce = nonce
@@ -51,8 +52,36 @@ func NewBlock(nonce int, previousHash string) *Block {
 func (b *Block) Print() {
 	fmt.Printf("timestamp    %d\n", b.timestamp)
 	fmt.Printf("nonce        %d\n", b.nonce)
-	fmt.Printf("previousHash %s\n", b.previousHash)
+	fmt.Printf("previousHash %x\n", b.previousHash)
 	fmt.Printf("transactions %s\n", b.transactions)
+}
+
+/**
+* ブロックのハッシュ化
+* @return jsonでハッシュ化した情報
+**/
+func (b *Block) Hash() [32]byte {
+	//構造体をjsonでマーシャルする
+	m, _ := json.Marshal(b)
+	return sha256.Sum256([]byte(m))
+}
+
+/**
+* カスタマイズでマーシャルJSONを上書き
+*　@return capitalした値
+**/
+func (b *Block) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Timestamp    int64    `json: "timestamp"`
+		Nonce        int      `json: "nonce"`
+		PreviousHash [32]byte `json: "previous_hash"`
+		Transactions []string `json: "transactions"`
+	}{
+		Timestamp:    b.timestamp,
+		Nonce:        b.nonce,
+		PreviousHash: b.previousHash,
+		Transactions: b.transactions,
+	})
 }
 
 /**
@@ -71,9 +100,12 @@ type BlockChain struct {
 * @return ブロックチェーン情報
 **/
 func NewBlockChain() *BlockChain {
+	// 初期値だから空
+	b := &Block{}
 	bc := new(BlockChain)
+
 	//一番最初のブロックには、ナンスやハッシュ値がないため
-	bc.CreateBlock(0, "Init hash")
+	bc.CreateBlock(0, b.Hash())
 	return bc
 }
 
@@ -83,10 +115,18 @@ func NewBlockChain() *BlockChain {
 * @para previousHash: ハッシュ値
 * @return b: 作成したブロック
 **/
-func (bc *BlockChain) CreateBlock(nonce int, previousHash string) *Block {
+func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	b := NewBlock(nonce, previousHash)
 	bc.chain = append(bc.chain, b)
 	return b
+}
+
+/**
+* １個前のブロック情報
+* @return 一個前のブロック情報
+**/
+func (bc *BlockChain) LastBlock() *Block {
+	return bc.chain[len(bc.chain)-1]
 }
 
 /**
@@ -108,12 +148,15 @@ func init() {
 }
 
 func main() {
-	// b := NewBlock(0, "init Hash")
-	// b.Print()
 	blockChain := NewBlockChain()
 	blockChain.Print()
-	blockChain.CreateBlock(5, "hash 1")
+
+	// 一個前のブロックのハッシュ化した情報
+	previousHash := blockChain.LastBlock().Hash()
+	blockChain.CreateBlock(5, previousHash)
 	blockChain.Print()
-	blockChain.CreateBlock(4, "hash 2")
+
+	previousHash = blockChain.LastBlock().Hash()
+	blockChain.CreateBlock(4, previousHash)
 	blockChain.Print()
 }

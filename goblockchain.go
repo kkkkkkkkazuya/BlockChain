@@ -141,6 +141,33 @@ func (bc *BlockChain) Print() {
 }
 
 /**
+* トランザクションの構造体
+**/
+type Transaction struct {
+	// 送信側のアドレス
+	senderBlockcahinAddress string
+	// 受信側のアドレス
+	recipientBlockchainAddress string
+	// 値
+	value float32
+}
+
+/**
+* トランザクションの初期値
+* @para sender: 送信側のアドレス
+* @para recipent: 受信側のアドレス
+* @para value: 値
+* @return トランザクション情報
+**/
+func NewTransaction(sender string, recipent string, value float32) *Transaction {
+	return &Transaction{
+		sender,
+		recipent,
+		value,
+	}
+}
+
+/**
 * ログ出力の初期値
 **/
 func init() {

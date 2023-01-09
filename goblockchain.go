@@ -71,6 +71,7 @@ func (b *Block) Hash() [32]byte {
 *　@return capitalした値
 **/
 func (b *Block) MarshalJSON() ([]byte, error) {
+	// prinvateのままだからcapitalに変更(publicでないとマーシャルできないため)
 	return json.Marshal(struct {
 		Timestamp    int64    `json: "timestamp"`
 		Nonce        int      `json: "nonce"`
@@ -165,6 +166,33 @@ func NewTransaction(sender string, recipent string, value float32) *Transaction 
 		recipent,
 		value,
 	}
+}
+
+/**
+* トランザクションのサーバーログ用
+**/
+func (t *Transaction) Print() {
+	fmt.Printf("%s\n", strings.Repeat("-", 40))
+	fmt.Printf(" sender_blockchain_address    %s\n", t.senderBlockcahinAddress)
+	fmt.Printf(" recipent_blockchain_address  %s\n", t.recipientBlockchainAddress)
+	fmt.Printf(" value  %.1f\n", t.value)
+}
+
+/**
+* カスタマイズでマーシャルJSONを上書き
+*　@return capitalした値
+**/
+func (t *Transaction) MarshalJSON() ([]byte, error) {
+	// privateだからcapitalに変更(publicでないとマーシャルできないため)
+	return json.Marshal(struct {
+		Sender    string  `json: "sender_blockcahin_address"`
+		Recipient string  `json: "recipient_blockchain_address"`
+		Value     float32 `json: "value"`
+	}{
+		Sender:    t.senderBlockcahinAddress,
+		Recipient: t.recipientBlockchainAddress,
+		Value:     t.value,
+	})
 }
 
 /**
